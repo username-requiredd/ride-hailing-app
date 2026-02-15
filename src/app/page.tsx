@@ -3,10 +3,12 @@
 import { MapView } from "@/app/components/MapView";
 import { RideController } from "@/app/components/RideController";
 import { UserLocationTracker } from "@/app/components/UserLocationTracker";
+import { DriverSimulator } from "@/app/components/DriverSimulator";
+import { SimulationController } from "@/app/components/SimulationController";
 import { useRideStore } from "@/store/ride";
 
 export default function Home() {
-  const { geolocationError } = useRideStore();
+  const { geolocationError, rideStatus } = useRideStore();
 
   return (
     <main>
@@ -18,6 +20,12 @@ export default function Home() {
       )}
       <MapView />
       <RideController />
+      {rideStatus === 'confirmed' && 
+        <>
+          <DriverSimulator />
+          <SimulationController />
+        </>
+      }
     </main>
   );
 }

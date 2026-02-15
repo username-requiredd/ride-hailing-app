@@ -19,6 +19,8 @@ export interface RideState {
   mapInstance: google.maps.Map | null;
   isGoogleMapsLoaded: boolean;
   geolocationError: string | null;
+  isSimulating: boolean;
+  simulationSpeed: number;
   setPickupLocation: (location: Location | null) => void;
   setDropoffLocation: (location: Location | null) => void;
   setIsPickupWithinMaiduguri: (isWithin: boolean | null) => void;
@@ -29,6 +31,10 @@ export interface RideState {
   setUserCurrentLocation: (location: google.maps.LatLngLiteral | null) => void;
   setGeolocationError: (error: string | null) => void;
   setRoutePolyline: (polyline: string | null) => void;
+  setDriverLocation: (location: google.maps.LatLngLiteral | null) => void;
+  setAnimationProgress: (progress: number) => void;
+  setIsSimulating: (isSimulating: boolean) => void;
+  setSimulationSpeed: (speed: number) => void;
 }
 
 export const useRideStore = create<RideState>((set) => ({
@@ -44,6 +50,8 @@ export const useRideStore = create<RideState>((set) => ({
   mapInstance: null,
   isGoogleMapsLoaded: false,
   geolocationError: null,
+  isSimulating: false,
+  simulationSpeed: 50, // Default speed in km/h
   setPickupLocation: (location) => set({ pickupLocation: location }),
   setDropoffLocation: (location) => set({ dropoffLocation: location }),
   setIsPickupWithinMaiduguri: (isWithin) => set({ isPickupWithinMaiduguri: isWithin }),
@@ -54,4 +62,8 @@ export const useRideStore = create<RideState>((set) => ({
   setUserCurrentLocation: (location) => set({ userCurrentLocation: location }),
   setGeolocationError: (error) => set({ geolocationError: error }),
   setRoutePolyline: (polyline) => set({ routePolyline: polyline }),
+  setDriverLocation: (location) => set({ driverLocation: location }),
+  setAnimationProgress: (progress) => set({ animationProgress: progress }),
+  setIsSimulating: (isSimulating) => set({ isSimulating }),
+  setSimulationSpeed: (speed) => set({ simulationSpeed: speed }),
 }));
