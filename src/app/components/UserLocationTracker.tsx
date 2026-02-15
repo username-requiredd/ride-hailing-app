@@ -4,7 +4,12 @@ import { useEffect } from 'react';
 import { useRideStore } from '@/store/ride';
 
 export function UserLocationTracker() {
-  const { setUserCurrentLocation, setGeolocationError } = useRideStore();
+  const {
+    setUserCurrentLocation,
+    setGeolocationError,
+    setWatchId,
+    watchId,
+  } = useRideStore();
 
   useEffect(() => {
     if (!navigator.geolocation) {
@@ -12,6 +17,7 @@ export function UserLocationTracker() {
       return;
     }
 
+    // Get the initial position
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const { latitude, longitude } = position.coords;
@@ -19,7 +25,19 @@ export function UserLocationTracker() {
       },
       (error) => {
         console.error("Error getting user location:", error);
-        setGeolocationError(`Error getting user location: ${error.message}. Please ensure you are on a secure (HTTPS) connection and have granted location permissions.`);
+        let errorMessage = 'An unknown error occurred while getting your location.';
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            errorMessage = 'Location access was denied. Please enable it in your browser settings to use this feature.';
+            break;
+          case error.POSITION_UNAVAILABLE:
+            errorMessage = 'Your location information is currently unavailable.';
+            break;
+          case error.TIMEOUT:
+            errorMessage = 'Getting your location timed out. Please try again.';
+            break;
+        }
+        setGeolocationError(errorMessage);
       },
       {
         enableHighAccuracy: true,
@@ -28,21 +46,27 @@ export function UserLocationTracker() {
       }
     );
 
-    const watchId = navigator.geolocation.watchPosition(
+    // Start watching the user's position
+    const newWatchId = navigator.geolocation.watchPosition(
       (position) => {
         const { latitude, longitude } = position.coords;
         setUserCurrentLocation({ lat: latitude, lng: longitude });
       },
       (error) => {
         console.error("Error watching user location:", error);
-        setGeolocationError(`Error watching user location: ${error.message}.`);
+        // We don't want to show a persistent error for watch, as it can be temporary
       }
     );
 
-    return () => {
-      navigator.geolocation.clearWatch(watchId);
-    };
-  }, [setUserCurrentLocation, setGeolocationError]);
+    setWatchId(newWatchId);
 
-  return null;
+    // Cleanup function to clear the watcher
+    return () => {
+      if (watchId !== null) {
+        navigator.geolocation.clearWatch(watchId);
+      }
+    };
+  }, [setUserCurrentLocation, setGeolocationError, setWatchId]); // Removed watchId from dependencies to avoid re-running
+
+  return null; // This is a non-visual component
 }

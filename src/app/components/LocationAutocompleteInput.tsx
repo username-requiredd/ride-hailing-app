@@ -11,7 +11,6 @@ interface LocationAutocompleteInputProps {
 }
 
 export function LocationAutocompleteInput({ onLocationSelect, type, initialValue = '' }: LocationAutocompleteInputProps) {
-  // == STATE MANAGEMENT ==
   const [inputValue, setInputValue] = useState(initialValue);
   const [suggestions, setSuggestions] = useState<google.maps.places.AutocompletePrediction[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -22,41 +21,35 @@ export function LocationAutocompleteInput({ onLocationSelect, type, initialValue
 
   const debouncedInputValue = useDebounce(inputValue, 500);
 
-  // == REFS FOR GOOGLE MAPS SERVICES ==
   const autocompleteService = useRef<google.maps.places.AutocompleteService | null>(null);
   const placesService = useRef<google.maps.places.PlacesService | null>(null);
-  const sessionToken = useRef<google.maps.places.AutocompleteSessionToken>();
+  const sessionToken = useRef<google.maps.places.AutocompleteSessionToken | undefined>(undefined);
   const maiduguriBounds = useRef<google.maps.LatLngBounds | null>(null);
   const componentRef = useRef<HTMLDivElement>(null);
 
-  const { mapInstance, isGoogleMapsLoaded } = useRideStore();
+  const { mapInstance } = useRideStore();
 
-  // == INITIALIZATION ==
   useEffect(() => {
-    if (isGoogleMapsLoaded && mapInstance) {
+    if (mapInstance) {
       autocompleteService.current = new google.maps.places.AutocompleteService();
       placesService.current = new google.maps.places.PlacesService(mapInstance);
       maiduguriBounds.current = new google.maps.LatLngBounds(
         new google.maps.LatLng(11.75, 13.05),
         new google.maps.LatLng(11.9, 13.25)
       );
-      sessionToken.current = new google.maps.places.AutocompleteSessionToken();
     }
-  }, [isGoogleMapsLoaded, mapInstance]);
+  }, [mapInstance]);
 
-  // == DEBOUNCED FETCHING LOGIC ==
   useEffect(() => {
-    // Condition to fetch: there's input, a selection hasn't been made, and services are ready.
-    if (debouncedInputValue && !isSelectionCommitted && autocompleteService.current) {
-      setIsLoading(true);
-      setError(null);
-
+    if (debouncedInputValue && !isSelectionCommitted && autocompleteService.current && maiduguriBounds.current) {
+      if (!sessionToken.current) {
+        sessionToken.current = new google.maps.places.AutocompleteSessionToken();
+      }
       autocompleteService.current.getPlacePredictions(
         {
           input: debouncedInputValue,
           bounds: maiduguriBounds.current,
           componentRestrictions: { country: 'ng' },
-          strictBounds: true,
           sessionToken: sessionToken.current,
         },
         (predictions, status) => {
@@ -64,33 +57,29 @@ export function LocationAutocompleteInput({ onLocationSelect, type, initialValue
           if (status === google.maps.places.PlacesServiceStatus.OK && predictions) {
             setSuggestions(predictions);
             setIsDropdownOpen(true);
-            setActiveIndex(-1); // Reset active index on new suggestions
-          } else if (status === google.maps.places.PlacesServiceStatus.ZERO_RESULTS) {
-            setSuggestions([]);
-            setIsDropdownOpen(false);
+            setActiveIndex(-1);
           } else {
-            setError('Error fetching suggestions.');
             setSuggestions([]);
             setIsDropdownOpen(false);
+            if (status !== google.maps.places.PlacesServiceStatus.ZERO_RESULTS) {
+              setError('Error fetching suggestions.');
+            }
           }
         }
       );
-    } else {
-      setSuggestions([]);
-      setIsDropdownOpen(false);
     }
   }, [debouncedInputValue, isSelectionCommitted]);
 
-  // == EVENT HANDLERS ==
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(e.target.value);
-    setIsSelectionCommitted(false); // User is typing again, reset the commit flag
+    setIsSelectionCommitted(false);
+    setIsLoading(true);
+    setError(null);
   };
 
   const handleSelectSuggestion = useCallback((placeId: string) => {
     if (!placesService.current) return;
 
-    // Lock state to prevent race conditions
     setIsSelectionCommitted(true);
     setIsDropdownOpen(false);
     setIsLoading(true);
@@ -100,14 +89,11 @@ export function LocationAutocompleteInput({ onLocationSelect, type, initialValue
       if (status === google.maps.places.PlacesServiceStatus.OK && place?.geometry?.location && place.formatted_address) {
         const location = { lat: place.geometry.location.lat(), lng: place.geometry.location.lng() };
         onLocationSelect(location, place.formatted_address);
-        setInputValue(place.formatted_address); // Update input with final, formatted address
-        setSuggestions([]); // Clear suggestions
-        
-        // Renew the session token for the next interaction
-        sessionToken.current = new google.maps.places.AutocompleteSessionToken();
+        setInputValue(place.formatted_address);
+        setSuggestions([]);
+        sessionToken.current = undefined;
       } else {
         setError('Could not retrieve location details.');
-        // If details fetch fails, allow user to try again
         setIsSelectionCommitted(false);
       }
     });
@@ -131,7 +117,6 @@ export function LocationAutocompleteInput({ onLocationSelect, type, initialValue
     }
   };
 
-  // Close dropdown if clicking outside the component
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (componentRef.current && !componentRef.current.contains(event.target as Node)) {
@@ -142,15 +127,6 @@ export function LocationAutocompleteInput({ onLocationSelect, type, initialValue
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  if (!isGoogleMapsLoaded) {
-    return (
-      <div className="w-full p-2 rounded-md bg-gray-800 text-gray-400">
-        Loading mapping service...
-      </div>
-    );
-  }
-
-  // == JSX ==
   return (
     <div className="relative" ref={componentRef}>
       <input

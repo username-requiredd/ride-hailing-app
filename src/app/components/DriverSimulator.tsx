@@ -1,100 +1,82 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRideStore } from '@/store/ride';
 
 export function DriverSimulator() {
   const {
-    routePolyline,
-    isSimulating,
-    simulationSpeed,
-    setDriverLocation,
-    setAnimationProgress,
     pickupLocation,
-    isGoogleMapsLoaded,
+    dropoffLocation,
+    setDriverLocation,
+    setRideStatus,
+    setTripSummary,
   } = useRideStore();
+  const [route, setRoute] = useState<google.maps.LatLngLiteral[]>([]);
+  const step = useRef(0);
+  const animationFrameId = useRef<number | null>(null);
 
-  const animationFrameRef = useRef<number>();
-  const startTimeRef = useRef<number>();
-  const pathRef = useRef<google.maps.LatLng[]>([]);
-
+  // 1. Fetch the route when locations are set
   useEffect(() => {
-    if (routePolyline && isGoogleMapsLoaded) {
-      pathRef.current = google.maps.geometry.encoding.decodePath(routePolyline);
-    } else {
-      pathRef.current = [];
-    }
-  }, [routePolyline, isGoogleMapsLoaded]);
+    if (!pickupLocation || !dropoffLocation) return;
 
-  const animate = (timestamp: number) => {
-    if (!startTimeRef.current) {
-      startTimeRef.current = timestamp;
-    }
+    const directionsService = new google.maps.DirectionsService();
+    directionsService.route(
+      {
+        origin: new google.maps.LatLng(pickupLocation),
+        destination: new google.maps.LatLng(dropoffLocation),
+        travelMode: google.maps.TravelMode.DRIVING,
+      },
+      (result, status) => {
+        if (status === google.maps.DirectionsStatus.OK && result) {
+          const path = result.routes[0].overview_path.map(p => ({ lat: p.lat(), lng: p.lng() }));
+          setRoute(path);
 
-    const elapsedTime = (timestamp - startTimeRef.current) / 1000; // in seconds
-    const speedInMetersPerSecond = (simulationSpeed * 1000) / 3600;
-    const distanceCovered = elapsedTime * speedInMetersPerSecond;
-
-    const totalDistance = google.maps.geometry.spherical.computeLength(pathRef.current);
-    let progress = distanceCovered / totalDistance;
-
-    if (progress >= 1) {
-      progress = 1;
-      setDriverLocation(pathRef.current[pathRef.current.length - 1].toJSON());
-      setAnimationProgress(1);
-      cancelAnimationFrame(animationFrameRef.current!);
-      return;
-    }
-
-    const currentPosition = getPointAtDistance(pathRef.current, distanceCovered);
-    setDriverLocation(currentPosition);
-    setAnimationProgress(progress);
-
-    animationFrameRef.current = requestAnimationFrame(animate);
-  };
-
-  useEffect(() => {
-    if (isSimulating && pathRef.current.length > 0) {
-      startTimeRef.current = undefined;
-      animationFrameRef.current = requestAnimationFrame(animate);
-    } else {
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
+          // Calculate and set trip summary
+          const leg = result.routes[0].legs[0];
+          if (leg.distance && leg.duration) {
+            setTripSummary({
+              distance: leg.distance.value / 1609.34, // to miles
+              duration: leg.duration.value / 60, // to minutes
+              fare: 25.50, // Placeholder fare
+            });
+          }
+        }
       }
-    }
+    );
 
     return () => {
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
+      // Cleanup on unmount or when locations change
+      if (animationFrameId.current) {
+        cancelAnimationFrame(animationFrameId.current);
+      }
+      step.current = 0;
+      setRoute([]);
+    };
+  }, [pickupLocation, dropoffLocation, setTripSummary]);
+
+  // 2. Animate the driver along the route
+  useEffect(() => {
+    if (route.length === 0) return;
+
+    const animate = () => {
+      if (step.current >= route.length) {
+        setRideStatus('finished'); // Trip is complete
+        return;
+      }
+
+      setDriverLocation(route[step.current]);
+      step.current += 1;
+      animationFrameId.current = requestAnimationFrame(animate);
+    };
+
+    animationFrameId.current = requestAnimationFrame(animate);
+
+    return () => {
+      if (animationFrameId.current) {
+        cancelAnimationFrame(animationFrameId.current);
       }
     };
-  }, [isSimulating, pathRef.current]);
-  
-    useEffect(() => {
-    if (pickupLocation) {
-      setDriverLocation(pickupLocation);
-    }
-  }, [pickupLocation, setDriverLocation]);
+  }, [route, setDriverLocation, setRideStatus]);
 
-
-  // Helper function to find a point at a specific distance along a path
-  function getPointAtDistance(path: google.maps.LatLng[], distance: number): google.maps.LatLngLiteral {
-    let coveredDistance = 0;
-    for (let i = 0; i < path.length - 1; i++) {
-      const p1 = path[i];
-      const p2 = path[i + 1];
-      const segmentLength = google.maps.geometry.spherical.computeDistanceBetween(p1, p2);
-
-      if (coveredDistance + segmentLength >= distance) {
-        const fraction = (distance - coveredDistance) / segmentLength;
-        const heading = google.maps.geometry.spherical.computeHeading(p1, p2);
-        return google.maps.geometry.spherical.computeOffset(p1, (distance - coveredDistance), heading).toJSON();
-      }
-
-      coveredDistance += segmentLength;
-    }
-    return path[path.length - 1].toJSON(); // Should not be reached if progress < 1
-  }
-
-  return null; // This is a non-visual component
+  return null; // This component does not render anything
 }

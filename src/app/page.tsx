@@ -1,38 +1,35 @@
 'use client';
 
-import { MapView } from "@/app/components/MapView";
-import { RideController } from "@/app/components/RideController";
-import { UserLocationTracker } from "@/app/components/UserLocationTracker";
-import { DriverSimulator } from "@/app/components/DriverSimulator";
-import { SimulationController } from "@/app/components/SimulationController";
-import { MapCameraManager } from "@/app/components/MapCameraManager";
-import { useRideStore } from "@/store/ride";
+import { RideController } from '@/app/components/RideController';
+import { MapView } from '@/app/components/MapView';
+import { UserLocationTracker } from '@/app/components/UserLocationTracker';
+import { MapCameraManager } from '@/app/components/MapCameraManager';
+import { SimulationController } from '@/app/components/SimulationController';
+import { RideLifecycle } from '@/app/components/RideLifecycle';
+import { useRideStore } from '@/store/ride';
+import SignIn from './components/SignIn';
 
 export default function Home() {
-  const { geolocationError, rideStatus } = useRideStore();
+  const {
+    pickupLocation,
+    dropoffLocation,
+    rideStatus,
+  } = useRideStore();
+
+  const isRouteVisible = !!pickupLocation && !!dropoffLocation;
 
   return (
-    <main>
-      <UserLocationTracker />
-      {geolocationError && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 bg-red-500 text-white p-4 rounded-md shadow-lg z-50">
-          {geolocationError}
-        </div>
-      )}
+    <main className="relative h-screen w-screen overflow-hidden">
+      <SignIn />
       <MapView />
-      <RideController />
+      <UserLocationTracker />
       <MapCameraManager />
-      {rideStatus === 'confirmed' && 
-        <>
-          <DriverSimulator />
-          <SimulationController />
-        </>
-      }
-       {(rideStatus === 'in-progress' || rideStatus === 'finished') && (
-        <>
-          <DriverSimulator />
-          <SimulationController />
-        </>
+      
+      {/* Ride Lifecycle & Simulation */}
+      <RideController />
+      <RideLifecycle />
+      {rideStatus === 'in-progress' && isRouteVisible && (
+        <SimulationController />
       )}
     </main>
   );

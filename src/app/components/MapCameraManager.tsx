@@ -15,12 +15,7 @@ export function MapCameraManager() {
   } = useRideStore();
 
   // Hook for the Uber-style following behavior
-  useUberStyleDriverFollow({
-    mapInstance,
-    driverLocation,
-    isFollowingDriver,
-    rideStatus,
-  });
+  useUberStyleDriverFollow(mapInstance);
 
   // Effect for initial centering when ride is confirmed
   useEffect(() => {

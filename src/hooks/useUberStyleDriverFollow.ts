@@ -1,90 +1,66 @@
-'use client';
-
-import { useEffect, useRef, useState } from 'react';
+import { useMemo, useCallback, useRef } from 'react';
 import { useRideStore } from '@/store/ride';
 
-interface UberStyleDriverFollowProps {
-  mapInstance: google.maps.Map | null;
-  driverLocation: google.maps.LatLngLiteral | null;
-  isFollowingDriver: boolean;
-  rideStatus: 'idle' | 'configuring' | 'confirmed' | 'in-progress' | 'finished';
-}
+const MIN_ZOOM = 16;
+const MAX_ZOOM = 18;
+const ZOOM_IN_SPEED = 0.00005; // Adjust for faster/slower zoom in
+const FOLLOW_TILT = 45;
+const FOLLOW_BEARING_OFFSET = -45; // Driver icon is not pointing straight up
 
-export function useUberStyleDriverFollow({
-  mapInstance,
-  driverLocation,
-  isFollowingDriver,
-  rideStatus,
-}: UberStyleDriverFollowProps) {
-  const [isManuallyInteracting, setIsManuallyInteracting] = useState(false);
-  const resumeFollowTimeout = useRef<NodeJS.Timeout | null>(null);
+export const useUberStyleDriverFollow = (map: google.maps.Map | null) => {
+  const { driverLocation, rideStatus } = useRideStore();
+  const lastBearing = useRef(0);
 
-  // Effect to handle manual map interaction
-  useEffect(() => {
-    if (!mapInstance) return;
-
-    const onDragStart = () => {
-      if (resumeFollowTimeout.current) {
-        clearTimeout(resumeFollowTimeout.current);
-      }
-      setIsManuallyInteracting(true);
+  const smoothedBearing = useMemo(() => {
+    return (currentBearing: number, alpha: number = 0.1) => {
+      lastBearing.current = alpha * currentBearing + (1 - alpha) * lastBearing.current;
+      return lastBearing.current;
     };
+  }, []);
 
-    const onIdle = () => {
-      if (isManuallyInteracting) {
-        resumeFollowTimeout.current = setTimeout(() => {
-          setIsManuallyInteracting(false);
-        }, 3000); // Resume follow after 3 seconds
-      }
-    };
+  const calculateBearing = useCallback((lat1: number, lng1: number, lat2: number, lng2: number) => {
+    const dLng = lng2 - lng1;
+    const y = Math.sin(dLng) * Math.cos(lat2);
+    const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng);
+    return (Math.atan2(y, x) * 180) / Math.PI;
+  }, []);
 
-    const dragListener = mapInstance.addListener('dragstart', onDragStart);
-    const idleListener = mapInstance.addListener('idle', onIdle);
+  const updateCamera = useCallback(() => {
+    if (!map || !driverLocation || rideStatus !== 'in-progress') return;
 
-    return () => {
-      dragListener.remove();
-      idleListener.remove();
-      if (resumeFollowTimeout.current) {
-        clearTimeout(resumeFollowTimeout.current);
-      }
-    };
-  }, [mapInstance, isManuallyInteracting]);
+    const currentCenter = map.getCenter();
+    if (!currentCenter) return;
 
-  // Effect for following the driver with Uber-style offset
-  useEffect(() => {
-    if (
-      !mapInstance ||
-      !driverLocation ||
-      !isFollowingDriver ||
-      isManuallyInteracting ||
-      rideStatus !== 'in-progress'
-    ) {
-      return;
+    const currentZoom = map.getZoom() || MIN_ZOOM;
+    const currentBearing = map.getHeading() || 0;
+    const currentTilt = map.getTilt() || 0;
+
+    const distanceToDriver = google.maps.geometry.spherical.computeDistanceBetween(
+      currentCenter,
+      new google.maps.LatLng(driverLocation)
+    );
+
+    const newZoom = Math.min(MAX_ZOOM, MIN_ZOOM + (1 / (distanceToDriver * ZOOM_IN_SPEED + 1)) * (MAX_ZOOM - MIN_ZOOM));
+
+    let newBearing = currentBearing;
+    if (distanceToDriver > 5) {
+      const bearing = calculateBearing(
+        currentCenter.lat(),
+        currentCenter.lng(),
+        driverLocation.lat,
+        driverLocation.lng
+      );
+      newBearing = smoothedBearing(bearing);
     }
 
-    const calculateOffsetCenter = (): google.maps.LatLng => {
-      const bounds = mapInstance.getBounds();
-      if (!bounds) {
-        return new google.maps.LatLng(driverLocation);
-      }
+    map.moveCamera({
+      center: driverLocation,
+      zoom: currentZoom + (newZoom - currentZoom) * 0.1, // Smooth zoom
+      heading: currentBearing + (newBearing + FOLLOW_BEARING_OFFSET - currentBearing) * 0.1, // Smooth bearing
+      tilt: currentTilt + (FOLLOW_TILT - currentTilt) * 0.1, // Smooth tilt
+    });
 
-      const northEast = bounds.getNorthEast();
-      const southWest = bounds.getSouthWest();
-      const latSpan = northEast.lat() - southWest.lat();
-      const latOffset = latSpan * 0.25; // Position driver 25% from the bottom
+  }, [map, driverLocation, rideStatus, calculateBearing, smoothedBearing]);
 
-      return new google.maps.LatLng(driverLocation.lat + latOffset, driverLocation.lng);
-    };
-
-    const targetCenter = calculateOffsetCenter();
-
-    const animate = () => {
-        mapInstance.panTo(targetCenter);
-    };
-
-    const frameId = requestAnimationFrame(animate);
-
-    return () => cancelAnimationFrame(frameId);
-
-  }, [mapInstance, driverLocation, isFollowingDriver, isManuallyInteracting, rideStatus]);
-}
+  return updateCamera;
+};
