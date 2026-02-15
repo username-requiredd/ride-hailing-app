@@ -2,13 +2,15 @@
 
 import { useEffect } from 'react';
 import { useRideStore } from '@/store/ride';
+import { shallow } from 'zustand/shallow';
 
 export function UserLocationTracker() {
   const { setUserLocation, setGeolocationError } = useRideStore(
     (state) => ({
       setUserLocation: state.setUserLocation,
       setGeolocationError: state.setGeolocationError,
-    })
+    }),
+    shallow
   );
 
   useEffect(() => {
