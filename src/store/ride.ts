@@ -21,9 +21,10 @@ export interface RideState {
   geolocationError: string | null;
   setPickupLocation: (location: Location | null) => void;
   setDropoffLocation: (location: Location | null) => void;
+  setIsPickupWithinMaiduguri: (isWithin: boolean | null) => void;
+  setIsDropoffWithinMaiduguri: (isWithin: boolean | null) => void;
   setMapInstance: (map: google.maps.Map | null) => void;
   setIsGoogleMapsLoaded: (isLoaded: boolean) => void;
-  // ... other setters
   setRideStatus: (status: RideState['rideStatus']) => void;
   setUserCurrentLocation: (location: google.maps.LatLngLiteral | null) => void;
   setGeolocationError: (error: string | null) => void;
@@ -44,6 +45,8 @@ export const useRideStore = create<RideState>((set) => ({
   geolocationError: null,
   setPickupLocation: (location) => set({ pickupLocation: location }),
   setDropoffLocation: (location) => set({ dropoffLocation: location }),
+  setIsPickupWithinMaiduguri: (isWithin) => set({ isPickupWithinMaiduguri: isWithin }),
+  setIsDropoffWithinMaiduguri: (isWithin) => set({ isDropoffWithinMaiduguri: isWithin }),
   setMapInstance: (map) => set({ mapInstance: map }),
   setIsGoogleMapsLoaded: (isLoaded) => set({ isGoogleMapsLoaded: isLoaded }),
   setRideStatus: (status) => set({ rideStatus: status }),
