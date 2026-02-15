@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRideStore } from '@/store/ride';
+import { shallow } from 'zustand/shallow';
 
 export function DriverSimulator() {
   const {
@@ -10,7 +11,16 @@ export function DriverSimulator() {
     setDriverLocation,
     setRideStatus,
     setTripSummary,
-  } = useRideStore();
+  } = useRideStore(
+    (state) => ({
+      pickupLocation: state.pickupLocation,
+      dropoffLocation: state.dropoffLocation,
+      setDriverLocation: state.setDriverLocation,
+      setRideStatus: state.setRideStatus,
+      setTripSummary: state.setTripSummary,
+    }),
+    shallow
+  );
   const [route, setRoute] = useState<google.maps.LatLngLiteral[]>([]);
   const step = useRef(0);
   const animationFrameId = useRef<number | null>(null);

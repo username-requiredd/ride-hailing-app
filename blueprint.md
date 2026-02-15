@@ -25,7 +25,7 @@ This document outlines the architecture and features of a modern, full-featured 
 *   **Responsive:** The layout will be fully responsive, ensuring a seamless experience on both desktop and mobile devices.
 *   **Animations and Transitions:** Subtle animations will be used to enhance the user experience, such as a pulsing icon when finding a driver and a fade-in animation for the trip completion modal.
 
-## Current Plan: UI Upgrade and Ride Lifecycle Implementation
+## UI Upgrade and Ride Lifecycle Implementation
 
 This phase of the project focuses on upgrading the UI to professional standards and implementing the full ride lifecycle. The following steps will be taken:
 
@@ -52,3 +52,14 @@ This phase of the project focuses on upgrading the UI to professional standards 
     *   Ensure all new components are styled professionally and are fully responsive.
     *   Implement smooth transitions and animations between ride states.
     *   Refine the map behavior to ensure a seamless experience throughout the ride.
+
+## Bug Fixes and Refinements
+
+*   **Zustand State Management:**
+    *   Addressed a critical bug causing the "Rendered more hooks than during the previous render" error.
+    *   The root cause was identified as components selecting multiple slices of the `useRideStore` state without a `shallow` comparator, leading to unnecessary re-renders.
+    *   Corrected the usage of `useRideStore` in all affected components (`DriverArrived.tsx`, `FindingDriver.tsx`, `MapCameraManager.tsx`, `RideLifecycle.tsx`, `RideSelection.tsx`, `Sidebar.tsx`) and the `useUberStyleDriverFollow.ts` hook by memoizing the selection with `shallow`.
+*   **Code Linting:**
+    *   Ran `npm run lint -- --fix` to identify and resolve warnings.
+    *   Removed unused variables from `MapCameraManager.tsx` and `RideController.tsx` to improve code cleanliness.
+*   **Result:** The application is now stable, and the primary rendering error has been resolved, ensuring a smooth and predictable user experience.

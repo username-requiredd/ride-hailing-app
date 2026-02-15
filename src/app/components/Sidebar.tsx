@@ -1,9 +1,17 @@
 'use client';
 
 import { useRideStore } from '@/store/ride';
+import { shallow } from 'zustand/shallow';
 
 export function Sidebar() {
-  const { rideType, setRideType, setRideStatus } = useRideStore();
+  const { rideType, setRideType, setRideStatus } = useRideStore(
+    (state) => ({
+      rideType: state.rideType,
+      setRideType: state.setRideType,
+      setRideStatus: state.setRideStatus,
+    }),
+    shallow
+  );
 
   const handleRideSelection = (type: 'economy' | 'business') => {
     setRideType(type);

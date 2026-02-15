@@ -4,6 +4,7 @@ import { useCallback } from 'react';
 import { GoogleMap, useJsApiLoader, Marker, Polyline } from '@react-google-maps/api';
 import { useRideStore } from '@/store/ride';
 import { CarMarker } from './CarMarker';
+import { shallow } from 'zustand/shallow';
 
 const containerStyle = {
   width: '100%',
@@ -191,7 +192,17 @@ export function MapView() {
     setMapInstance,
     setIsGoogleMapsLoaded,
     routePolyline,
-  } = useRideStore();
+  } = useRideStore(
+    (state) => ({
+      pickupLocation: state.pickupLocation,
+      dropoffLocation: state.dropoffLocation,
+      driverLocation: state.driverLocation,
+      setMapInstance: state.setMapInstance,
+      setIsGoogleMapsLoaded: state.setIsGoogleMapsLoaded,
+      routePolyline: state.routePolyline,
+    }),
+    shallow
+  );
 
   const { isLoaded, loadError } = useJsApiLoader({
     id: 'google-map-script',

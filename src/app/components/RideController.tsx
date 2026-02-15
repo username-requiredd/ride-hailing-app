@@ -3,7 +3,6 @@
 import { useRideStore } from '@/store/ride';
 import { Sidebar } from './Sidebar';
 import { FindingDriver } from './FindingDriver';
-import { DriverArrived } from './DriverArrived';
 import { TripInProgress } from './TripInProgress';
 import { TripComplete } from './TripComplete';
 import { RatingModal } from './RatingModal';
