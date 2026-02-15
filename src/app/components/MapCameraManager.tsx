@@ -2,8 +2,9 @@
 
 import { useEffect } from 'react';
 import { useRideStore } from '@/store/ride';
+import { useUberStyleDriverFollow } from '@/hooks/useUberStyleDriverFollow';
 
-export function MapRecenter() {
+export function MapCameraManager() {
   const {
     mapInstance,
     pickupLocation,
@@ -12,6 +13,14 @@ export function MapRecenter() {
     isFollowingDriver,
     rideStatus,
   } = useRideStore();
+
+  // Hook for the Uber-style following behavior
+  useUberStyleDriverFollow({
+    mapInstance,
+    driverLocation,
+    isFollowingDriver,
+    rideStatus,
+  });
 
   // Effect for initial centering when ride is confirmed
   useEffect(() => {
@@ -22,13 +31,6 @@ export function MapRecenter() {
       mapInstance.fitBounds(bounds, 100); // 100px padding
     }
   }, [mapInstance, rideStatus, pickupLocation, dropoffLocation]);
-
-  // Effect for following the driver
-  useEffect(() => {
-    if (mapInstance && isFollowingDriver && driverLocation) {
-      mapInstance.panTo(driverLocation);
-    }
-  }, [mapInstance, isFollowingDriver, driverLocation]);
 
   return null; // This is a non-visual component
 }
