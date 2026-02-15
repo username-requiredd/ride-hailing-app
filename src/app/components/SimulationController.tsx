@@ -11,7 +11,9 @@ export function SimulationController() {
     setSimulationSpeed,
     setAnimationProgress,
     pickupLocation,
-    setDriverLocation
+    setDriverLocation,
+    isFollowingDriver,
+    setIsFollowingDriver,
   } = useRideStore();
 
   const handleStart = () => setIsSimulating(true);
@@ -20,7 +22,7 @@ export function SimulationController() {
     setIsSimulating(false);
     setAnimationProgress(0);
     if (pickupLocation) {
-        setDriverLocation(pickupLocation);
+      setDriverLocation(pickupLocation);
     }
   };
 
@@ -32,7 +34,7 @@ export function SimulationController() {
         <button onClick={handlePause} disabled={!isSimulating} className="px-3 py-1 bg-yellow-600 hover:bg-yellow-500 rounded disabled:opacity-50">Pause</button>
         <button onClick={handleReset} className="px-3 py-1 bg-red-600 hover:bg-red-500 rounded">Reset</button>
       </div>
-      <div>
+      <div className="mb-4">
         <label htmlFor="speed-slider" className="block mb-1">Speed: {simulationSpeed} km/h</label>
         <input
           id="speed-slider"
@@ -43,6 +45,16 @@ export function SimulationController() {
           onChange={(e) => setSimulationSpeed(Number(e.target.value))}
           className="w-full"
         />
+      </div>
+      <div className="flex items-center">
+        <input
+          id="follow-driver-checkbox"
+          type="checkbox"
+          checked={isFollowingDriver}
+          onChange={(e) => setIsFollowingDriver(e.target.checked)}
+          className="mr-2"
+        />
+        <label htmlFor="follow-driver-checkbox">Follow Driver</label>
       </div>
     </div>
   );

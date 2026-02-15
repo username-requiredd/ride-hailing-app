@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useCallback } from 'react';
+import { useCallback } from 'react';
 import { GoogleMap, useJsApiLoader, Marker, Polyline } from '@react-google-maps/api';
 import { useRideStore } from '@/store/ride';
 import { CarMarker } from './CarMarker';
@@ -189,10 +189,8 @@ export function MapView() {
     dropoffLocation,
     driverLocation,
     setMapInstance,
-    mapInstance,
-    userCurrentLocation,
     setIsGoogleMapsLoaded,
-    routePolyline, // Added this
+    routePolyline,
   } = useRideStore();
 
   const { isLoaded, loadError } = useJsApiLoader({
@@ -210,28 +208,6 @@ export function MapView() {
     setMapInstance(null);
     setIsGoogleMapsLoaded(false);
   }, [setMapInstance, setIsGoogleMapsLoaded]);
-
-  useEffect(() => {
-    if (!mapInstance) return;
-
-    if (pickupLocation && dropoffLocation) {
-      const bounds = new window.google.maps.LatLngBounds();
-      bounds.extend(new window.google.maps.LatLng(pickupLocation.lat, pickupLocation.lng));
-      bounds.extend(new window.google.maps.LatLng(dropoffLocation.lat, dropoffLocation.lng));
-      mapInstance.fitBounds(bounds, 100); 
-    } else if (pickupLocation) {
-      mapInstance.panTo(pickupLocation);
-      mapInstance.setZoom(15);
-    } else if (dropoffLocation) {
-      mapInstance.panTo(dropoffLocation);
-      mapInstance.setZoom(15);
-    } else if (userCurrentLocation) {
-        mapInstance.panTo(userCurrentLocation);
-        mapInstance.setZoom(15);
-    }
-
-  }, [pickupLocation, dropoffLocation, userCurrentLocation, mapInstance]);
-
 
   if (loadError) {
     return <div>Error loading maps. Please check the API key and internet connection.</div>;

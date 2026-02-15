@@ -21,6 +21,7 @@ export interface RideState {
   geolocationError: string | null;
   isSimulating: boolean;
   simulationSpeed: number;
+  isFollowingDriver: boolean;
   setPickupLocation: (location: Location | null) => void;
   setDropoffLocation: (location: Location | null) => void;
   setIsPickupWithinMaiduguri: (isWithin: boolean | null) => void;
@@ -35,6 +36,7 @@ export interface RideState {
   setAnimationProgress: (progress: number) => void;
   setIsSimulating: (isSimulating: boolean) => void;
   setSimulationSpeed: (speed: number) => void;
+  setIsFollowingDriver: (isFollowing: boolean) => void;
 }
 
 export const useRideStore = create<RideState>((set) => ({
@@ -52,6 +54,7 @@ export const useRideStore = create<RideState>((set) => ({
   geolocationError: null,
   isSimulating: false,
   simulationSpeed: 50, // Default speed in km/h
+  isFollowingDriver: true, // Follow driver by default
   setPickupLocation: (location) => set({ pickupLocation: location }),
   setDropoffLocation: (location) => set({ dropoffLocation: location }),
   setIsPickupWithinMaiduguri: (isWithin) => set({ isPickupWithinMaiduguri: isWithin }),
@@ -66,4 +69,5 @@ export const useRideStore = create<RideState>((set) => ({
   setAnimationProgress: (progress) => set({ animationProgress: progress }),
   setIsSimulating: (isSimulating) => set({ isSimulating }),
   setSimulationSpeed: (speed) => set({ simulationSpeed: speed }),
+  setIsFollowingDriver: (isFollowing) => set({ isFollowingDriver: isFollowing }),
 }));

@@ -5,6 +5,7 @@ import { RideController } from "@/app/components/RideController";
 import { UserLocationTracker } from "@/app/components/UserLocationTracker";
 import { DriverSimulator } from "@/app/components/DriverSimulator";
 import { SimulationController } from "@/app/components/SimulationController";
+import { MapRecenter } from "@/app/components/MapRecenter";
 import { useRideStore } from "@/store/ride";
 
 export default function Home() {
@@ -20,6 +21,7 @@ export default function Home() {
       )}
       <MapView />
       <RideController />
+      <MapRecenter />
       {rideStatus === 'confirmed' && 
         <>
           <DriverSimulator />
