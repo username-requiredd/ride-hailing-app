@@ -28,6 +28,7 @@ export interface RideState {
   setRideStatus: (status: RideState['rideStatus']) => void;
   setUserCurrentLocation: (location: google.maps.LatLngLiteral | null) => void;
   setGeolocationError: (error: string | null) => void;
+  setRoutePolyline: (polyline: string | null) => void;
 }
 
 export const useRideStore = create<RideState>((set) => ({
@@ -52,4 +53,5 @@ export const useRideStore = create<RideState>((set) => ({
   setRideStatus: (status) => set({ rideStatus: status }),
   setUserCurrentLocation: (location) => set({ userCurrentLocation: location }),
   setGeolocationError: (error) => set({ geolocationError: error }),
+  setRoutePolyline: (polyline) => set({ routePolyline: polyline }),
 }));

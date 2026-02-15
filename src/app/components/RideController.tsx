@@ -15,7 +15,7 @@ export function RideController() {
     isPickupWithinMaiduguri,
     isDropoffWithinMaiduguri,
     setRideStatus,
-    rideStatus,
+    setRoutePolyline, // Added this
     isGoogleMapsLoaded,
   } = useRideStore();
   const [isModalOpen, setIsModalOpen] = useState(true);
@@ -58,10 +58,27 @@ export function RideController() {
     }
   };
 
-  const handleStartRide = () => {
+  const handleStartRide = async () => {
     if (pickupLocation && dropoffLocation && isPickupWithinMaiduguri && isDropoffWithinMaiduguri) {
-      setRideStatus('confirmed');
-      setIsModalOpen(false);
+      try {
+        const origin = `${pickupLocation.lat},${pickupLocation.lng}`;
+        const destination = `${dropoffLocation.lat},${dropoffLocation.lng}`;
+        const response = await fetch(`/api/directions?origin=${origin}&destination=${destination}`, {
+          method: 'POST',
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch directions');
+        }
+
+        const data = await response.json();
+        setRoutePolyline(data.polyline);
+        setRideStatus('confirmed');
+        setIsModalOpen(false);
+      } catch (error) {
+        console.error(error);
+        alert('Failed to start the ride. Please try again.');
+      }
     } else {
       alert('Please select valid pickup and dropoff locations within Maiduguri.');
     }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useCallback } from 'react';
-import { GoogleMap, useJsApiLoader, Marker } from '@react-google-maps/api';
+import { GoogleMap, useJsApiLoader, Marker, Polyline } from '@react-google-maps/api';
 import { useRideStore } from '@/store/ride';
 import { CarMarker } from './CarMarker';
 
@@ -192,6 +192,7 @@ export function MapView() {
     mapInstance,
     userCurrentLocation,
     setIsGoogleMapsLoaded,
+    routePolyline, // Added this
   } = useRideStore();
 
   const { isLoaded, loadError } = useJsApiLoader({
@@ -200,38 +201,31 @@ export function MapView() {
     libraries,
   });
 
-  // Store the map instance in the global store once it's loaded
   const onMapLoad = useCallback((map: google.maps.Map) => {
     setMapInstance(map);
     setIsGoogleMapsLoaded(true);
   }, [setMapInstance, setIsGoogleMapsLoaded]);
 
-  // Clear the map instance from the global store when the component unmounts
   const onMapUnmount = useCallback(() => {
     setMapInstance(null);
     setIsGoogleMapsLoaded(false);
   }, [setMapInstance, setIsGoogleMapsLoaded]);
 
-  // Effect to handle map view changes based on location updates
   useEffect(() => {
     if (!mapInstance) return;
 
     if (pickupLocation && dropoffLocation) {
-      // Both locations are set, fit them in the viewport
       const bounds = new window.google.maps.LatLngBounds();
       bounds.extend(new window.google.maps.LatLng(pickupLocation.lat, pickupLocation.lng));
       bounds.extend(new window.google.maps.LatLng(dropoffLocation.lat, dropoffLocation.lng));
-      mapInstance.fitBounds(bounds, 100); // 100px padding
+      mapInstance.fitBounds(bounds, 100); 
     } else if (pickupLocation) {
-      // Only pickup is set, center on it
       mapInstance.panTo(pickupLocation);
       mapInstance.setZoom(15);
     } else if (dropoffLocation) {
-      // Only dropoff is set, center on it
       mapInstance.panTo(dropoffLocation);
       mapInstance.setZoom(15);
     } else if (userCurrentLocation) {
-        // Default to user's current location if available
         mapInstance.panTo(userCurrentLocation);
         mapInstance.setZoom(15);
     }
@@ -246,24 +240,27 @@ export function MapView() {
   return isLoaded ? (
     <GoogleMap
       mapContainerStyle={containerStyle}
-      center={defaultCenter} // Initial center, will be updated by useEffect
-      zoom={12} // Initial zoom
+      center={defaultCenter}
+      zoom={12}
       options={mapOptions}
       onLoad={onMapLoad}
       onUnmount={onMapUnmount}
     >
-      {pickupLocation && (
-        <Marker 
-          position={{ lat: pickupLocation.lat, lng: pickupLocation.lng }} 
-          label={{ text: "P", color: "white" }}
+      {pickupLocation && <Marker position={{ lat: pickupLocation.lat, lng: pickupLocation.lng }} label={{ text: "P", color: "white" }} />}
+      {dropoffLocation && <Marker position={{ lat: dropoffLocation.lat, lng: dropoffLocation.lng }} label={{ text: "D", color: "white" }} />}
+      
+      {routePolyline && (
+        <Polyline
+          path={google.maps.geometry.encoding.decodePath(routePolyline)}
+          options={{
+            strokeColor: '#4A90E2',
+            strokeOpacity: 0.8,
+            strokeWeight: 6,
+            geodesic: true,
+          }}
         />
       )}
-      {dropoffLocation && (
-        <Marker 
-          position={{ lat: dropoffLocation.lat, lng: dropoffLocation.lng }} 
-          label={{ text: "D", color: "white" }}
-        />
-      )}
+
       {driverLocation && <CarMarker position={driverLocation} />}
     </GoogleMap>
   ) : <div>Loading Map...</div>;
