@@ -2,16 +2,10 @@
 
 import { useEffect } from 'react';
 import { useRideStore } from '@/store/ride';
-import { shallow } from 'zustand/shallow';
 
 export function RideLifecycle() {
-  const { rideStatus, setRideStatus } = useRideStore(
-    (state) => ({
-      rideStatus: state.rideStatus,
-      setRideStatus: state.setRideStatus,
-    }),
-    shallow
-  );
+  const rideStatus = useRideStore((state) => state.rideStatus);
+  const setRideStatus = useRideStore((state) => state.setRideStatus);
 
   useEffect(() => {
     if (rideStatus === 'confirmed') {

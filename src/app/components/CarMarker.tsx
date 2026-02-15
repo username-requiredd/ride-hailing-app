@@ -5,7 +5,7 @@ import { useRideStore } from '@/store/ride';
 
 const CarMarkerComponent = ({ position }: { position: google.maps.LatLngLiteral }) => {
   const markerRef = useRef<google.maps.Marker | null>(null);
-  const { driverLocation } = useRideStore();
+  const driverLocation = useRideStore((state) => state.driverLocation);
 
   useEffect(() => {
     if (markerRef.current && driverLocation) {
@@ -14,10 +14,10 @@ const CarMarkerComponent = ({ position }: { position: google.maps.LatLngLiteral 
     }
   }, [driverLocation]);
 
-  const bearing = google.maps.geometry.spherical.computeHeading(
+  const bearing = driverLocation ? google.maps.geometry.spherical.computeHeading(
     new google.maps.LatLng(position.lat, position.lng),
-    new google.maps.LatLng(driverLocation?.lat || position.lat, driverLocation?.lng || position.lng)
-  );
+    new google.maps.LatLng(driverLocation.lat, driverLocation.lng)
+  ) : 0;
 
   return (
     <Marker

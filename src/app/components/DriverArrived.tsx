@@ -3,7 +3,7 @@
 import { useRideStore } from '@/store/ride';
 
 export function DriverArrived() {
-  const { driverInfo } = useRideStore();
+  const driverInfo = useRideStore(s => s.driverInfo);
 
   return (
     <div className="absolute bottom-0 left-0 w-full bg-white shadow-lg z-10 p-4">

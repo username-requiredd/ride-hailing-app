@@ -3,7 +3,7 @@
 import { useRideStore } from '@/store/ride';
 
 export function FindingDriver() {
-  const { pickupLocation } = useRideStore();
+  const pickupLocation = useRideStore((state) => state.pickupLocation);
 
   return (
     <div className="absolute bottom-0 left-0 w-full bg-white shadow-lg z-10 p-4">

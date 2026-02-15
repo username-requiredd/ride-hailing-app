@@ -3,23 +3,12 @@
 import { useEffect } from 'react';
 import { useRideStore } from '@/store/ride';
 import { useUberStyleDriverFollow } from '@/hooks/useUberStyleDriverFollow';
-import { shallow } from 'zustand/shallow';
 
 export function MapCameraManager() {
-  const {
-    mapInstance,
-    pickupLocation,
-    dropoffLocation,
-    rideStatus,
-  } = useRideStore(
-    (state) => ({
-      mapInstance: state.mapInstance,
-      pickupLocation: state.pickupLocation,
-      dropoffLocation: state.dropoffLocation,
-      rideStatus: state.rideStatus,
-    }),
-    shallow
-  );
+  const mapInstance = useRideStore((state) => state.mapInstance);
+  const pickupLocation = useRideStore((state) => state.pickupLocation);
+  const dropoffLocation = useRideStore((state) => state.dropoffLocation);
+  const rideStatus = useRideStore((state) => state.rideStatus);
 
   // Hook for the Uber-style following behavior
   useUberStyleDriverFollow(mapInstance);

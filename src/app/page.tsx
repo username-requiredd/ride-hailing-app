@@ -8,21 +8,11 @@ import { SimulationController } from '@/app/components/SimulationController';
 import { RideLifecycle } from '@/app/components/RideLifecycle';
 import { useRideStore } from '@/store/ride';
 import SignIn from './components/SignIn';
-import { shallow } from 'zustand/shallow';
 
 export default function Home() {
-  const {
-    pickupLocation,
-    dropoffLocation,
-    rideStatus,
-  } = useRideStore(
-    (state) => ({
-      pickupLocation: state.pickupLocation,
-      dropoffLocation: state.dropoffLocation,
-      rideStatus: state.rideStatus,
-    }),
-    shallow
-  );
+  const pickupLocation = useRideStore((state) => state.pickupLocation);
+  const dropoffLocation = useRideStore((state) => state.dropoffLocation);
+  const rideStatus = useRideStore((state) => state.rideStatus);
 
   const isRouteVisible = !!pickupLocation && !!dropoffLocation;
 

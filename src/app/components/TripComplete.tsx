@@ -3,7 +3,7 @@
 import { useRideStore } from '@/store/ride';
 
 export function TripComplete() {
-  const { tripSummary } = useRideStore();
+  const tripSummary = useRideStore((state) => state.tripSummary);
 
   return (
     <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-20">
@@ -13,7 +13,7 @@ export function TripComplete() {
           <div className="space-y-2">
             <p>Fare: ${tripSummary.fare.toFixed(2)}</p>
             <p>Distance: {tripSummary.distance.toFixed(2)} miles</p>
-            <p>Duration: {tripSummary.duration} minutes</p>
+            <p>Duration: {tripSummary.duration.toFixed(2)} minutes</p>
           </div>
         )}
       </div>

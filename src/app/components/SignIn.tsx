@@ -3,7 +3,7 @@
 import { useRideStore } from '@/store/ride';
 
 export default function SignIn() {
-  const { rideStatus } = useRideStore();
+  const rideStatus = useRideStore(s => s.rideStatus);
 
   if (rideStatus !== 'idle') {
     return null;

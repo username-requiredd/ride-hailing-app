@@ -2,18 +2,12 @@
 
 import { useRideStore } from '@/store/ride';
 import { PlaceAutocomplete } from './PlaceAutocomplete';
-import { shallow } from 'zustand/shallow';
 
 export function RideSelection() {
-  const { pickupLocation, dropoffLocation, setRideStage, setRideType } = useRideStore(
-    (state) => ({
-      pickupLocation: state.pickupLocation,
-      dropoffLocation: state.dropoffLocation,
-      setRideStage: state.setRideStage,
-      setRideType: state.setRideType,
-    }),
-    shallow
-  );
+  const pickupLocation = useRideStore((state) => state.pickupLocation);
+  const dropoffLocation = useRideStore((state) => state.dropoffLocation);
+  const setRideStage = useRideStore((state) => state.setRideStage);
+  const setRideType = useRideStore((state) => state.setRideType);
 
   const handleRideRequest = (rideType: 'economy' | 'business') => {
     setRideType(rideType);

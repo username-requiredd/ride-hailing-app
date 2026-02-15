@@ -2,7 +2,6 @@
 
 import { useEffect, useRef } from 'react';
 import { useRideStore } from '@/store/ride';
-import { shallow } from 'zustand/shallow';
 
 export function SimulationController() {
   const {
@@ -10,12 +9,11 @@ export function SimulationController() {
     routePolyline,
     setDriverLocation,
   } = useRideStore(
-    (state) => ({
+    (state) => ({ 
       rideStatus: state.rideStatus,
       routePolyline: state.routePolyline,
       setDriverLocation: state.setDriverLocation,
     }),
-    shallow
   );
   const animationFrameRef = useRef<number | null>(null);
 

@@ -2,31 +2,20 @@
 
 import { useEffect } from 'react';
 import { useRideStore } from '@/store/ride';
-import { shallow } from 'zustand/shallow';
 
 export function UserLocationTracker() {
-  const { setUserLocation, setGeolocationError } = useRideStore(
-    (state) => ({
-      setUserLocation: state.setUserLocation,
-      setGeolocationError: state.setGeolocationError,
-    }),
-    shallow
-  );
+  const setUserLocation = useRideStore((state) => state.setUserLocation);
+  const setGeolocationError = useRideStore((state) => state.setGeolocationError);
 
   useEffect(() => {
-    if (!navigator.geolocation) {
+    if (!navigator. geolocation) {
       setGeolocationError('Geolocation is not supported by your browser.');
       return;
     }
 
     const handleSuccess = (position: GeolocationPosition) => {
       const { latitude, longitude } = position.coords;
-      // Safety check as requested
-      if (typeof setUserLocation === 'function') {
-        setUserLocation({ lat: latitude, lng: longitude });
-      } else {
-        console.error('setUserLocation is missing or not a function');
-      }
+      setUserLocation({ lat: latitude, lng: longitude });
     };
 
     const handleError = (error: GeolocationPositionError) => {
@@ -53,14 +42,12 @@ export function UserLocationTracker() {
       maximumAge: 0,
     };
 
-    // watchPosition is sufficient for initial and subsequent updates.
     const watchId = navigator.geolocation.watchPosition(
       handleSuccess,
       handleError,
       options
     );
 
-    // Proper cleanup to clear the watcher on component unmount.
     return () => {
       navigator.geolocation.clearWatch(watchId);
     };

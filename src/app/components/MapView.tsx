@@ -4,7 +4,6 @@ import { useCallback } from 'react';
 import { GoogleMap, useJsApiLoader, Marker, Polyline } from '@react-google-maps/api';
 import { useRideStore } from '@/store/ride';
 import { CarMarker } from './CarMarker';
-import { shallow } from 'zustand/shallow';
 
 const containerStyle = {
   width: '100%',
@@ -185,24 +184,15 @@ const mapOptions = {
 const libraries: ("places" | "geometry")[] = ['places', 'geometry'];
 
 export function MapView() {
-  const {
-    pickupLocation,
-    dropoffLocation,
-    driverLocation,
-    setMapInstance,
-    setIsGoogleMapsLoaded,
-    routePolyline,
-  } = useRideStore(
-    (state) => ({
-      pickupLocation: state.pickupLocation,
-      dropoffLocation: state.dropoffLocation,
-      driverLocation: state.driverLocation,
-      setMapInstance: state.setMapInstance,
-      setIsGoogleMapsLoaded: state.setIsGoogleMapsLoaded,
-      routePolyline: state.routePolyline,
-    }),
-    shallow
-  );
+  const pickupLocation = useRideStore((state) => state.pickupLocation);
+  const dropoffLocation = useRideStore((state) => state.dropoffLocation);
+  const driverLocation = useRideStore((state) => state.driverLocation);
+  const setMapInstance = useRideStore((state) => state.setMapInstance);
+  const setIsGoogleMapsLoaded = useRideStore((state) => state.setIsGoogleMapsLoaded);
+  const routePolyline = useRideStore((state) => state.routePolyline);
+  const isConfiguring = useRideStore((state) => state.isConfiguring);
+  const setPickupLocation = useRideStore((state) => state.setPickupLocation);
+  const setDropoffLocation = useRideStore((state) => state.setDropoffLocation);
 
   const { isLoaded, loadError } = useJsApiLoader({
     id: 'google-map-script',
@@ -220,6 +210,18 @@ export function MapView() {
     setIsGoogleMapsLoaded(false);
   }, [setMapInstance, setIsGoogleMapsLoaded]);
 
+  const handleMapClick = (e: google.maps.MapMouseEvent) => {
+    if (!e.latLng) return;
+
+    const location = { lat: e.latLng.lat(), lng: e.latLng.lng() };
+
+    if (isConfiguring === 'pickup') {
+      setPickupLocation(location);
+    } else if (isConfiguring === 'dropoff') {
+      setDropoffLocation(location);
+    }
+  };
+
   if (loadError) {
     return <div>Error loading maps. Please check the API key and internet connection.</div>;
   }
@@ -232,6 +234,7 @@ export function MapView() {
       options={mapOptions}
       onLoad={onMapLoad}
       onUnmount={onMapUnmount}
+      onClick={handleMapClick}
     >
       {pickupLocation && <Marker position={{ lat: pickupLocation.lat, lng: pickupLocation.lng }} label={{ text: "P", color: "white" }} />}
       {dropoffLocation && <Marker position={{ lat: dropoffLocation.lat, lng: dropoffLocation.lng }} label={{ text: "D", color: "white" }} />}

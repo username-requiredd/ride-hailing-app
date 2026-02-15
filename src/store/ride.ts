@@ -19,10 +19,15 @@ interface RideState {
   rideStatus: RideStage;
   rideType: RideType | null;
   driverLocation: google.maps.LatLngLiteral | null;
-  driverInfo: {
+  driver: {
     name: string;
-    car: string;
-    license: string;
+    photoUrl: string;
+    vehicle: {
+      make: string;
+      model: string;
+      licensePlate: string;
+    };
+    rating: number;
   } | null;
   tripSummary: {
     fare: number;
@@ -31,6 +36,7 @@ interface RideState {
   } | null;
   rating: number | null;
   feedback: string;
+  isConfiguring: 'pickup' | 'dropoff' | null;
 
   // Setters
   setMapInstance: (map: google.maps.Map | null) => void;
@@ -45,11 +51,7 @@ interface RideState {
   setDriverLocation: (location: google.maps.LatLngLiteral) => void;
   setIsFollowingDriver: (isFollowing: boolean) => void;
   setRideType: (type: RideType) => void;
-  setDriverInfo: (info: {
-    name: string;
-    car: string;
-    license: string;
-  } | null) => void;
+  setDriver: (driver: RideState['driver']) => void;
   setTripSummary: (summary: {
     fare: number;
     distance: number;
@@ -57,6 +59,7 @@ interface RideState {
   } | null) => void;
   setRating: (rating: number | null) => void;
   setFeedback: (feedback: string) => void;
+  setIsConfiguring: (isConfiguring: 'pickup' | 'dropoff' | null) => void;
   
   // Resetters
   resetRide: () => void;
@@ -78,10 +81,11 @@ const initialState = {
   rideStatus: 'idle' as RideStage,
   rideType: null as RideType | null,
   driverLocation: null,
-  driverInfo: null,
+  driver: null,
   tripSummary: null,
   rating: null,
   feedback: '',
+  isConfiguring: null,
 };
 
 export const useRideStore = create<RideState>((set) => ({
@@ -96,14 +100,32 @@ export const useRideStore = create<RideState>((set) => ({
   setGeolocationError: (error) => set({ geolocationError: error }),
   setWatchId: (id) => set({ watchId: id }),
   setRoutePolyline: (polyline) => set({ routePolyline: polyline }),
-  setRideStatus: (status) => set({ rideStatus: status }),
+  setRideStatus: (status) => {
+    set({ rideStatus: status });
+    if (status === 'confirmed') {
+      // Simulate finding a driver
+      setTimeout(() => {
+        set({ driver: {
+          name: 'John Doe',
+          photoUrl: 'https://xsgames.co/randomusers/assets/avatars/male/74.jpg',
+          vehicle: {
+            make: 'Toyota',
+            model: 'Camry',
+            licensePlate: 'ABC-123'
+          },
+          rating: 4.9
+        }});
+      }, 5000);
+    }
+  },
   setDriverLocation: (location) => set({ driverLocation: location }),
   setIsFollowingDriver: (isFollowing) => set({ isFollowingDriver: isFollowing }),
   setRideType: (type) => set({ rideType: type }),
-  setDriverInfo: (info) => set({ driverInfo: info }),
+  setDriver: (driver) => set({ driver: driver }),
   setTripSummary: (summary) => set({ tripSummary: summary }),
   setRating: (rating) => set({ rating: rating }),
   setFeedback: (feedback) => set({ feedback: feedback }),
+  setIsConfiguring: (isConfiguring) => set({ isConfiguring: isConfiguring }),
 
   // Reset ride to initial state
   resetRide: () =>

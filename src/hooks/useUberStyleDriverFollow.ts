@@ -1,6 +1,5 @@
 import { useMemo, useCallback, useRef } from 'react';
 import { useRideStore } from '@/store/ride';
-import { shallow } from 'zustand/shallow';
 
 const MIN_ZOOM = 16;
 const MAX_ZOOM = 18;
@@ -9,13 +8,8 @@ const FOLLOW_TILT = 45;
 const FOLLOW_BEARING_OFFSET = -45; // Driver icon is not pointing straight up
 
 export const useUberStyleDriverFollow = (map: google.maps.Map | null) => {
-  const { driverLocation, rideStatus } = useRideStore(
-    (state) => ({
-      driverLocation: state.driverLocation,
-      rideStatus: state.rideStatus,
-    }),
-    shallow
-  );
+  const driverLocation = useRideStore((state) => state.driverLocation);
+  const rideStatus = useRideStore((state) => state.rideStatus);
   const lastBearing = useRef(0);
 
   const smoothedBearing = useMemo(() => {

@@ -1,19 +1,13 @@
 'use client';
 
 import { useRideStore } from '@/store/ride';
-import { shallow } from 'zustand/shallow';
 
 export function RatingModal() {
-  const { rating, setRating, feedback, setFeedback, resetRide } = useRideStore(
-    (state) => ({
-      rating: state.rating,
-      setRating: state.setRating,
-      feedback: state.feedback,
-      setFeedback: state.setFeedback,
-      resetRide: state.resetRide,
-    }),
-    shallow
-  );
+  const rating = useRideStore((state) => state.rating);
+  const setRating = useRideStore((state) => state.setRating);
+  const feedback = useRideStore((state) => state.feedback);
+  const setFeedback = useRideStore((state) => state.setFeedback);
+  const resetRide = useRideStore((state) => state.resetRide);
 
   return (
     <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-20">
