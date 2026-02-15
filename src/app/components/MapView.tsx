@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
-import { GoogleMap, useJsApiLoader, Marker, Polyline } from '@react-google-maps/api';
+import { useEffect, useCallback } from 'react';
+import { GoogleMap, useJsApiLoader, Marker } from '@react-google-maps/api';
 import { useRideStore } from '@/store/ride';
 import { CarMarker } from './CarMarker';
 
@@ -17,7 +17,8 @@ const defaultCenter = {
 
 const mapOptions = {
   styles: [
-    {
+    // ... (Your existing map styles)
+        {
       "elementType": "geometry",
       "stylers": [
         {
@@ -186,55 +187,84 @@ export function MapView() {
   const {
     pickupLocation,
     dropoffLocation,
-    routePolyline,
     driverLocation,
     setMapInstance,
     mapInstance,
     userCurrentLocation,
     setIsGoogleMapsLoaded,
   } = useRideStore();
-  const { isLoaded } = useJsApiLoader({
+
+  const { isLoaded, loadError } = useJsApiLoader({
     id: 'google-map-script',
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!,
     libraries,
   });
 
-  const mapRef = useRef<google.maps.Map | null>(null);
+  // Store the map instance in the global store once it's loaded
+  const onMapLoad = useCallback((map: google.maps.Map) => {
+    setMapInstance(map);
+    setIsGoogleMapsLoaded(true);
+  }, [setMapInstance, setIsGoogleMapsLoaded]);
 
-  useEffect(() => {
-    setIsGoogleMapsLoaded(isLoaded);
-  }, [isLoaded, setIsGoogleMapsLoaded]);
+  // Clear the map instance from the global store when the component unmounts
+  const onMapUnmount = useCallback(() => {
+    setMapInstance(null);
+    setIsGoogleMapsLoaded(false);
+  }, [setMapInstance, setIsGoogleMapsLoaded]);
 
+  // Effect to handle map view changes based on location updates
   useEffect(() => {
-    if (mapRef.current) {
-      setMapInstance(mapRef.current);
-    }
-  }, [mapRef.current]);
+    if (!mapInstance) return;
 
-  useEffect(() => {
-    if (userCurrentLocation && mapInstance) {
-      mapInstance.panTo(userCurrentLocation);
+    if (pickupLocation && dropoffLocation) {
+      // Both locations are set, fit them in the viewport
+      const bounds = new window.google.maps.LatLngBounds();
+      bounds.extend(new window.google.maps.LatLng(pickupLocation.lat, pickupLocation.lng));
+      bounds.extend(new window.google.maps.LatLng(dropoffLocation.lat, dropoffLocation.lng));
+      mapInstance.fitBounds(bounds, 100); // 100px padding
+    } else if (pickupLocation) {
+      // Only pickup is set, center on it
+      mapInstance.panTo(pickupLocation);
       mapInstance.setZoom(15);
+    } else if (dropoffLocation) {
+      // Only dropoff is set, center on it
+      mapInstance.panTo(dropoffLocation);
+      mapInstance.setZoom(15);
+    } else if (userCurrentLocation) {
+        // Default to user's current location if available
+        mapInstance.panTo(userCurrentLocation);
+        mapInstance.setZoom(15);
     }
-  }, [userCurrentLocation, mapInstance]);
+
+  }, [pickupLocation, dropoffLocation, userCurrentLocation, mapInstance]);
+
+
+  if (loadError) {
+    return <div>Error loading maps. Please check the API key and internet connection.</div>;
+  }
 
   return isLoaded ? (
     <GoogleMap
       mapContainerStyle={containerStyle}
-      center={defaultCenter}
-      zoom={12}
+      center={defaultCenter} // Initial center, will be updated by useEffect
+      zoom={12} // Initial zoom
       options={mapOptions}
-      onLoad={(map) => (mapRef.current = map)}
+      onLoad={onMapLoad}
+      onUnmount={onMapUnmount}
     >
-      {pickupLocation && <Marker position={pickupLocation} />}
-      {dropoffLocation && <Marker position={dropoffLocation} />}
-      {routePolyline && (
-        <Polyline
-          path={google.maps.geometry.encoding.decodePath(routePolyline)}
-          options={{ strokeColor: '#FF0000' }}
+      {pickupLocation && (
+        <Marker 
+          position={{ lat: pickupLocation.lat, lng: pickupLocation.lng }} 
+          label={{ text: "P", color: "white" }}
+        />
+      )}
+      {dropoffLocation && (
+        <Marker 
+          position={{ lat: dropoffLocation.lat, lng: dropoffLocation.lng }} 
+          label={{ text: "D", color: "white" }}
         />
       )}
       {driverLocation && <CarMarker position={driverLocation} />}
     </GoogleMap>
-  ) : <></>;
+  ) : <div>Loading Map...</div>;
 }

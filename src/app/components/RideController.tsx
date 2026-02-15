@@ -34,24 +34,24 @@ export function RideController() {
     }
   }, [isGoogleMapsLoaded]);
 
-  const handlePickupSelect = (location: google.maps.LatLngLiteral) => {
+  const handlePickupSelect = (location: google.maps.LatLngLiteral, address: string) => {
     if (maiduguriPolygon.current) {
       const isWithin = google.maps.geometry.poly.containsLocation(location, maiduguriPolygon.current);
       setIsPickupWithinMaiduguri(isWithin);
       if (isWithin) {
-        setPickupLocation(location);
+        setPickupLocation({ ...location, address });
       } else {
         alert('Pickup location must be within Maiduguri.');
       }
     }
   };
 
-  const handleDropoffSelect = (location: google.maps.LatLngLiteral) => {
+  const handleDropoffSelect = (location: google.maps.LatLngLiteral, address: string) => {
     if (maiduguriPolygon.current) {
       const isWithin = google.maps.geometry.poly.containsLocation(location, maiduguriPolygon.current);
       setIsDropoffWithinMaiduguri(isWithin);
       if (isWithin) {
-        setDropoffLocation(location);
+        setDropoffLocation({ ...location, address });
       } else {
         alert('Dropoff location must be within Maiduguri.');
       }
